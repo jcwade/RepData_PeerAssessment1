@@ -13,7 +13,8 @@ output:
 [`xtable`](http://CRAN.R-project.org/package=xtable), and
 [`lattice`](http://lmdvr.r-forge.r-project.org) packages:
 
-```{r, message=FALSE, warnings=FALSE}
+
+```r
 library(dplyr)
 library(lubridate)
 library(xtable)
@@ -22,7 +23,8 @@ library(lattice)
 
 (2) The data are stored in a CSV file in a ZIP archive.  Load the data and parse the dates in year-month-day format:
 
-```{r}
+
+```r
 load.data <- function() {
         con <- unz("activity.zip", "activity.csv")
         d <- tbl_df(read.csv(con, stringsAsFactors = FALSE))
@@ -38,7 +40,8 @@ data <- load.data()
 (1) We compute the total number of steps per day, ignoring entries
 where the number of steps is not given:
 
-```{r}
+
+```r
 total_steps_per_day <-
         data %>%
         filter(!is.na(steps)) %>%
@@ -48,29 +51,34 @@ total_steps_per_day <-
 
 (2) We show a histogram of total steps per day:
 
-```{r}
+
+```r
 hist(total_steps_per_day$total_steps,
      main = "Total steps per day",
      xlab = "Steps")
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png) 
+
 (3) We compute the mean and median of the total steps per day:
-```{r}
+
+```r
 mean_total_steps_per_day <-
         mean(total_steps_per_day$total_steps, na.rm = TRUE)
 
 median_total_steps_per_day <-
         median(total_steps_per_day$total_steps, na.rm = TRUE)
 ```
-- Mean: $`r mean_total_steps_per_day`$.
-- Median: $`r median_total_steps_per_day`$.
+- Mean: $1.0766189 &times; 10<sup>4</sup>$.
+- Median: $10765$.
 
 ## What is the average daily activity pattern?
 
 (1) We compute the averge steps for each interval, ignoring any
 missing values:
 
-```{r}
+
+```r
 mean_steps_per_interval <-
         data %>%
         filter(!is.na(steps)) %>%
@@ -80,7 +88,8 @@ mean_steps_per_interval <-
 
 Then we plot the result:
 
-```{r}
+
+```r
 plot(mean_steps_per_interval,
      type = "l",
      main = "Average steps per interval",
@@ -88,23 +97,31 @@ plot(mean_steps_per_interval,
      ylab = "Steps")
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
+
 (2) We compute the interval that has, on average, the most number of steps:
 
-```{r}
+
+```r
 most_mean_steps_per_interval <-
         which.max(mean_steps_per_interval$interval_mean) %>%
         mean_steps_per_interval$interval[.]
 ```
 
-We find that interval `r most_mean_steps_per_interval` has the most number of steps.
+We find that interval 835 has the most number of steps.
 
 ## Imputing missing values
 
 (1) The total number of missing values is computed by
 
-```{r}
+
+```r
 total_na <- sum(!complete.cases(data))
 total_na
+```
+
+```
+## [1] 2304
 ```
 
 (2) We fill in missing values using the global mean for each interval.
@@ -117,7 +134,8 @@ containing these values.  This operation can be done with an "inner
 join".  Then, we update the `steps` column with either the mean value
 or the existing value based on whether the `steps` value is missing:
 
-```{r}
+
+```r
 imputed_steps <-
         data %>%
         inner_join(mean_steps_per_interval, by = "interval") %>%
@@ -126,7 +144,8 @@ imputed_steps <-
 
 (4) (a) We make a histogram of the total number of steps taken each day.
 
-```{r}
+
+```r
 total_imputed_steps_per_day <-
         imputed_steps %>%
         group_by(date) %>%
@@ -137,10 +156,13 @@ hist(total_imputed_steps_per_day$total_steps,
      xlab = "Steps")
 ```
 
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+
 (b) The mean and median values can be computed with the following
 code:
 
-```{r}
+
+```r
 mean_total_imputed_steps_per_day <-
         mean(total_imputed_steps_per_day$total_steps)
 
@@ -148,12 +170,13 @@ median_total_imputed_steps_per_day <-
         median(total_imputed_steps_per_day$total_steps)
 ```
 
-- Mean: $`r mean_total_imputed_steps_per_day`$.
-- Median: $`r median_total_imputed_steps_per_day`$.
+- Mean: $1.0766189 &times; 10<sup>4</sup>$.
+- Median: $1.0766189 &times; 10<sup>4</sup>$.
 
 (c) The mean is the same as before but the median has changed:
 
-```{r results="asis"}
+
+```r
 mean_median_data <- data.frame(
         original = c(mean_total_steps_per_day, median_total_steps_per_day),
         imputed = c(mean_total_imputed_steps_per_day, median_total_imputed_steps_per_day),
@@ -162,14 +185,23 @@ mean_median_data <- data.frame(
 print(xtable(mean_median_data), type = "html")
 ```
 
-(d) The impact of the missing values is small on global aggregate statistics.  In the data, $`r (total_na / nrow(data)) * 100.00`$ percent of the values are missing.
+<!-- html table generated in R 3.1.2 by xtable 1.7-4 package -->
+<!-- Sun Apr 19 14:03:38 2015 -->
+<table border=1>
+<tr> <th>  </th> <th> original </th> <th> imputed </th>  </tr>
+  <tr> <td align="right"> mean </td> <td align="right"> 10766.19 </td> <td align="right"> 10766.19 </td> </tr>
+  <tr> <td align="right"> median </td> <td align="right"> 10765.00 </td> <td align="right"> 10766.19 </td> </tr>
+   </table>
+
+(d) The impact of the missing values is small on global aggregate statistics.  In the data, $13.1147541$ percent of the values are missing.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 (1) We create a `day_type` column indicating whether a day is a
 "weekday" or a "weekend":
 
-```{r}
+
+```r
 day_type <-function(date) {
         labs <- ifelse(weekdays(date) %in% c("Saturday", "Sunday"),
                        "weekend", "weekday")
@@ -184,7 +216,8 @@ steps_per_day_type <-
 (2) We make a time series plot showing the average number of steps per
 interval broken into two types, weekday and weekend.
 
-```{r}
+
+```r
 mean_steps_per_day_type <-
         steps_per_day_type %>%
         group_by(interval, day_type) %>%
@@ -199,3 +232,5 @@ xyplot(mean_steps ~ interval | day_type,
        xlab = "Interval",
        ylab = "Number of steps")
 ```
+
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png) 
